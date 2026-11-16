@@ -1,0 +1,69 @@
+schema_version: positioning-analysis-v0.1
+analysis_id: null
+status: planned
+created_at: null
+parent_run_ids: []
+parent_analysis_id: null
+protocol_version: room-v0.1
+protocol_sha256: null
+input_artifacts: [] # path, sha256; original files remain immutable
+algorithm:
+  baseline_id: null
+  variant: null
+  source_url: null
+  commit: null
+  patch_sha256: null
+  config_sha256: null
+  executable_path: null
+execution:
+  mode: null # live | offline
+  actual_command: null
+  working_directory: null
+  playback_rate: null
+  compute_environment_snapshot: null
+  seed_if_applicable: null
+  initialization_interval_unix_s: null
+reference:
+  reference_id: null
+  sha256: null
+  alignment_id: null
+  alignment_sha256: null
+  alignment_method: null
+  fit_point_ids: []
+  evaluation_point_ids: []
+  comparison_frame: rig_base
+  continuous_ground_truth_available: false
+clock_alignment:
+  method: null
+  offset_s: null
+  uncertainty_s: null
+selection:
+  evaluation_interval_unix_s: null
+  expected_sample_period_s: null
+  stale_threshold_s: null
+  exclusions: [] # interval, reason, originating event_id; still counted as failures
+metrics:
+  static_position_p95_m: null
+  static_drift_180s_m: null
+  stop_position_rmse_m: null
+  stop_position_p95_m: null
+  stop_position_max_m: null
+  odom_closure_error_m: null
+  map_closure_error_m: null
+  valid_pose_coverage_fraction: null
+  longest_gap_s: null
+  source_age_p95_s: null
+  processing_latency_p95_s: null
+  bridge_latency_p95_s: null
+  continuous_ate_rmse_m: null
+  continuous_rpe_translation_m: null
+  continuous_ate_rpe_reason: no_independent_continuous_reference
+  reset_count: null
+  visual_update_count: null
+outputs:
+  trajectory_paths: []
+  events_path: null
+  figures: []
+  report_path: null
+result: not_evaluated
+failure_reason: null

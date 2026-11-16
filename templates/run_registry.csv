@@ -1,0 +1,1 @@
+run_id,batch_id,created_at,purpose,baseline_id,test_id,repeat_index,room_id,rig_id,calibration_id,map_id,protocol_version,recording_status,evaluation_result,raw_path,analysis_ids,failure_reason,notes
