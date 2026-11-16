@@ -31,6 +31,10 @@
 /devel/
 /install/
 /log/
+/third_party/**/build/
+/third_party/**/devel/
+/third_party/**/install/
+/third_party/**/log/
 .venv*/
 venv/
 __pycache__/
