@@ -1,3 +1,10 @@
+# Local agent instructions and internal experiment planning/records.
+[Aa][Gg][Ee][Nn][Tt][Ss].md
+.agents/
+.codex/
+/docs/
+/templates/
+
 # Raw sensor recordings, flight logs and generated experiment artifacts.
 *.bag
 *.bag.active

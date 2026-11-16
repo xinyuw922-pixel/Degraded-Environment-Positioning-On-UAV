@@ -1,1 +1,0 @@
-event_id,run_id,host_unix_s,source_stamp_s,source_clock_domain,event_type,start_unix_s,end_unix_s,affected_stream,severity,description,action,exclusion_reason
