@@ -1,0 +1,48 @@
+--- a/utils/slam_dataset.py
++++ b/utils/slam_dataset.py
+@@ -381,7 +381,7 @@
+             imu_path = os.path.join(
+                 self.config.imu_path, "{}.csv".format(self.processed_frame)
+             )
+-            imu_period = pd.read_csv(imu_path, delimiter=",", skiprows=1).values
++            imu_period = pd.read_csv(imu_path, delimiter=",").values
+             for data in imu_period:
+                 dt = data[0]  # 时间变化量
+                 i_in = InputIkfom(self.config.tran_dtype, data[1:4], data[4:7])
+--- a/utils/error_state_iekf.py
++++ b/utils/error_state_iekf.py
+@@ -272,8 +272,9 @@
+         maximum_iter (int): 最大迭代次数。
+         """
+         # 将状态量和协方差矩阵转移到GPU
+-        self.x.cuda()
+-        self.P = self.P.cuda()
++        if self.device == "cuda":
++            self.x.cuda()
++            self.P = self.P.cuda()
+         valid_flag = True
+         converged = False
+ 
+--- a/utils/tools.py
++++ b/utils/tools.py
+@@ -172,7 +172,8 @@
+             shutil.copy2(argv[1], run_path)  # copy the config file to the result folder
+ 
+             git_commit_id = (
+-                subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
++                os.environ.get("CLID_SOURCE_COMMIT")
++                or subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
+             )  # current git commit
+             with open(os.path.join(run_path, "run.sh"), "w") as reproduce_shell:
+                 reproduce_shell.write(" ".join(["git checkout ", git_commit_id, "\n"]))
+--- a/slam.py
++++ b/slam.py
+@@ -42,7 +42,7 @@
+ 
+ def run_slam(config_path=None, dataset_name=None, sequence_name=None, seed=None):
+     torch.set_num_threads(
+-        16
++        int(os.environ.get("CLID_CPU_THREADS", "16"))
+     )  # 设置为16个线程，限制使用的线程数，使用太多的线程会导致电脑卡死
+     config = Config()
+     if config_path is not None:

@@ -1,2 +1,147 @@
 schema_version: third-party-sources-v0.1
-dependencies: []
+dependencies:
+- name: Point-LIO
+  path: third_party/point_lio
+  url: https://github.com/hku-mars/Point-LIO.git
+  commit: 4b86a469eb5572e70ed575af25b5f15dd06e8e3c
+  branch: point-lio-with-grid-map
+  license: BSD-3-Clause (upstream LICENSE; bundled components retain own notices)
+  license_file: third_party/point_lio/LICENSE
+  import_method: unmodified source snapshot from official fixed-commit archive
+  archive_sha256: 5fef9d7c5b50ff8dad692b21bd998dffd881438e72c0b518644315319534d7ff
+  patches:
+  - third_party/patches/point_lio_driver2.patch
+  patch_scope: 'Apply in isolated build copy: Livox driver2 types/dependencies, remove
+    unused glog include'
+  build: catkin_make -j1 -l1 after sourcing ROS Noetic and livox_ws
+  configuration: Runtime YAML outside repository; no claim of calibrated MID360 saturation
+    thresholds
+- name: DLIO
+  path: third_party/dlio
+  url: https://github.com/vectr-ucla/direct_lidar_inertial_odometry
+  commit: 5b123df5151445ae29325dc0e099d9a2aa9a7a71
+  branch: feature/livox-support
+  license: MIT; bundled code retains notices
+  license_file: third_party/dlio/LICENSE
+  import_method: official archive; commit from git-archive PAX comment
+  archive_sha256: 9b2842eceabe8782d404ad4557bc8ab75fdc936973ae06f538ef8e4864accd2e
+  patches:
+  - third_party/patches/dlio_driver2_dependency.patch
+- name: super_lio
+  path: third_party/super_lio
+  url: https://github.com/Liansheng-Wang/Super-LIO
+  branch: ros1
+  commit: 60b57aaac8dc397f80c56364e7ccb008c300cc29
+  archive_sha256: 5864d49fb1436f20169a3adba775530f3fe723cbdf2af7207158e81319e41c1f
+  license_file: third_party/super_lio/LICENSE
+  status: full_replay_and_stop_comparison_passed
+  patches:
+  - third_party/patches/super_lio_message_dependency.patch
+  license: GPL-3.0; preserve upstream LICENSE
+- name: rko_lio
+  path: third_party/rko_lio
+  url: https://github.com/PRBonn/rko_lio
+  branch: master
+  commit: 04566e598f700bc7d5efcfcf3a83327ce842f4f7
+  archive_sha256: ad3dffefffc459577c3f339fe169bf4e436f6e626e846c78b34e30a29a6bf8c2
+  license_file: third_party/rko_lio/LICENSE
+  status: full_replay_and_stop_comparison_passed
+  executed_distribution: rko-lio==0.4.0
+  execution_note: Official binary Python wheel; imported master source snapshot is
+    recorded separately and was not compiled for this run
+  license: MIT
+- name: kiss_icp
+  path: third_party/kiss_icp
+  url: https://github.com/PRBonn/kiss-icp
+  branch: main
+  commit: 1ffa7d7512f10bfc8b1185095011fa31184019e3
+  archive_sha256: b8a2402a5709d5f88e1df96d1c5c242cbdf2aed2938525587b986010a748b01e
+  license_file: third_party/kiss_icp/LICENSE
+  status: full_replay_and_stop_comparison_passed
+  executed_distribution: kiss-icp==1.3.0
+  execution_note: Official binary Python wheel; imported master source snapshot is
+    recorded separately and was not compiled for this run
+  license: MIT
+- name: glim
+  path: third_party/glim
+  url: https://github.com/koide3/glim
+  branch: master
+  commit: 1a197c999e4865f5cab7c9cd25474128413ebbca
+  archive_sha256: a23acae34277b8f4d49105acbf2f5eedc0872e0b72ad706a7e646ec6f026d4a1
+  license_file: third_party/glim/LICENSE
+  status: full_replay_and_stop_comparison_passed
+  adapter: tools/glim_headless.cpp
+  build_dependencies:
+    gtsam:
+      commit: 4f66a491ffc83cf092d0d818b11dc35135521612
+      archive_sha256: 9ff8846d0a83a245c284cb5760ec2d74535ef9b5885183ccfefd7ff122eba60e
+      url: https://github.com/borglab/gtsam
+      license: BSD-3-Clause
+      install_scope: isolated local build environment; not vendored
+    gtsam-points:
+      commit: 8e94654558dfbe7ddb0341de300daaf17e25ee02
+      archive_sha256: e79bc699e02ecff6f823e894c0f612e42780374c52af4b665ad7ff805935a365
+      url: https://github.com/koide3/gtsam_points
+      license: MIT
+      install_scope: isolated local build environment; not vendored
+    spdlog:
+      commit: 27cb4c76708608465c413f6d0e6b8d99a4d84302
+      archive_sha256: 1586508029a7d0670dfcb2d97575dcdc242d3868a259742b69f100801ab4e16b
+      url: https://github.com/gabime/spdlog
+      license: MIT
+      install_scope: isolated local build environment; not vendored
+    fmt:
+      commit: e69e5f977d458f2650bb346dadf2ad30c5320281
+      archive_sha256: 1250e4cc58bf06ee631567523f48848dc4596133e163f02615c97f78bab6c811
+      url: https://github.com/fmtlib/fmt
+      license: MIT
+      install_scope: isolated local build environment; not vendored
+  dependency_patches:
+  - third_party/patches/gtsam_points_boost_optional.patch
+  license: MIT
+  patches:
+  - third_party/patches/glim_gtsam42_navstate.patch
+- name: traj_lo
+  path: third_party/traj_lo
+  url: https://github.com/kevin2431/Traj-LO
+  branch: main
+  commit: ba273d36d4b69a557eedd19ba80e1c90ab30039d
+  archive_sha256: 8fb3ba38a6f727e91b47334508bba914aac191df6e9ede4ede7aafa594698cee
+  license_file: third_party/traj_lo/LICENSE
+  status: full_replay_and_stop_comparison_passed
+  adapter: tools/trajlo_headless.cpp
+  build_dependencies:
+    Sophus:
+      archive_sha256: eb1da440e6250c5efc7637a0611a5b8888875ce6ac22bf7ff6b6769bbc958082
+      commit: de0f8d3d92bf776271e16de56d1803940ebccab9
+      url: https://github.com/strasdat/Sophus
+      license: MIT
+      install_scope: isolated local build environment; not vendored
+    robin-map:
+      archive_sha256: a8424ad3b0affd4c57ed26f0f3d8a29604f0e1f2ef2089f497f614b1c94c7236
+      commit: 188c45569cc2a5dd768077c193830b51d33a5020
+      url: https://github.com/Tessil/robin-map
+      license: MIT
+      install_scope: isolated local build environment; not vendored
+  license: MIT
+- name: clid_slam
+  path: third_party/clid_slam
+  url: https://github.com/DUTRobot/CLID-SLAM
+  branch: main
+  commit: 5c4f9e720c716c1f18c3b189c37cc88cacf48e84
+  archive_sha256: 182ceca16cc1aa2b0135763cf9967daf35fdc7c52456d117ebe45c462580a52e
+  license_file: third_party/clid_slam/LICENSE
+  status: cpu_30_frame_complete_passed_full_replay_running
+  patches:
+  - third_party/patches/clid_cpu_and_imu_csv.patch
+  environment: CPU torch==2.5.1+cpu, numpy==1.26.4, matplotlib==3.8.4; other upstream
+    requirements in isolated environment; OpenCV wheel 4.10.0.84
+  license: MIT
+  runtime_note: Original default 16 threads retained for full replay; 1-thread smoke
+    passed but slower (276.85 s / 30 frames including warm-up)
+- name: FAST-LIO2
+  url: https://github.com/hku-mars/FAST_LIO.git
+  commit: 7cc4175de6f8ba2edf34bab02a42195b141027e9
+  import_method: external recursive checkout in a dedicated catkin workspace
+  patches:
+  - third_party/patches/fastlio_driver2.patch

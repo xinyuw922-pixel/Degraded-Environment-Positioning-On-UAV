@@ -1,0 +1,5 @@
+.idea
+.vscode
+gui/__pycache__
+utils/__pycache__
+model/__pycache__

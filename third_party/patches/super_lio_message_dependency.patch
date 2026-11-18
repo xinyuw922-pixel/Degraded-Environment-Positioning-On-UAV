@@ -1,0 +1,10 @@
+--- a/src/super_lio/CMakeLists.txt
++++ b/src/super_lio/CMakeLists.txt
+@@ -63,6 +63,7 @@
+ 
+ # library build
+ add_library(lio ${LIO_LIB_SRC} ${LIO_LIB_HEADERS})
++add_dependencies(lio ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+ 
+ # Target specific includes
+ target_include_directories(lio PUBLIC

@@ -1,0 +1,52 @@
+// MIT License
+//
+// Copyright (c) 2022 Ignacio Vizzo, Tiziano Guadagnino, Benedikt Mersch, Cyrill
+// Stachniss.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
+#include "voxel_down_sample.hpp"
+#include <Eigen/Core>
+#include <algorithm>
+#include <memory_resource>
+#include <sophus/se3.hpp>
+#include <unordered_map>
+#include <vector>
+
+namespace rko_lio::core {
+// if you need even better runtime-performance, consider using Luca Lobefaro's version of one cycle downsampling here:
+// https://github.com/PRBonn/kiss-icp/pull/347
+// although it does lead to worse odometry performance in certain situations
+
+std::vector<Eigen::Vector3s> voxel_down_sample(const std::vector<Eigen::Vector3s>& points, const Scalar voxel_size) {
+  const auto inv_voxel_size = static_cast<Scalar>(1.0 / voxel_size);
+  // the default allocator mallocs once per voxel, pmr cuts that to a handful of arena chunks
+  std::pmr::monotonic_buffer_resource arena;
+  std::pmr::unordered_map<Eigen::Vector3i, Eigen::Vector3s, VoxelHash> grid{&arena};
+  grid.reserve(points.size());
+  std::for_each(points.cbegin(), points.cend(),
+                [&](const auto& point) { grid.try_emplace(point_to_voxel(point, inv_voxel_size), point); });
+  std::vector<Eigen::Vector3s> downsampled;
+  downsampled.reserve(grid.size());
+  std::for_each(grid.cbegin(), grid.cend(),
+                [&](const auto& voxel_and_point) { downsampled.emplace_back(voxel_and_point.second); });
+  return downsampled;
+}
+
+} // namespace rko_lio::core

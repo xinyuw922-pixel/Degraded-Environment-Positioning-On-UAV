@@ -1,0 +1,11 @@
+--- a/include/gtsam_points/util/gtsam_migration.hpp
++++ b/include/gtsam_points/util/gtsam_migration.hpp
+@@ -54,7 +54,7 @@
+ 
+ using OptionalMatrixType = boost::optional<gtsam::Matrix&>;
+ using OptionalMatrixVecType = boost::optional<std::vector<gtsam::Matrix>&>;
+-constexpr auto NoneValue = boost::none;
++const auto NoneValue = boost::none;
+ 
+ #endif
+ 

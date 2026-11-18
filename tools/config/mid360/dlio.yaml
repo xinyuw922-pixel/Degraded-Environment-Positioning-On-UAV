@@ -1,0 +1,111 @@
+dlio:
+  adaptive: true
+  extrinsics:
+    baselink2imu:
+      R:
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      t:
+      - 0
+      - 0
+      - 0
+    baselink2lidar:
+      R:
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      t:
+      - -0.011
+      - -0.02329
+      - 0.04412
+  frames:
+    baselink: base_link
+    imu: imu
+    lidar: lidar
+    odom: odom
+  imu:
+    calibration: true
+    intrinsics:
+      accel:
+        bias:
+        - 0.0
+        - 0.0
+        - 0.0
+        sm:
+        - 1.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 1.0
+        - 0.0
+        - 0.0
+        - 0.0
+        - 1.0
+      gyro:
+        bias:
+        - 0.0
+        - 0.0
+        - 0.0
+    normalized: true
+  map:
+    dense:
+      filtered: false
+    sparse:
+      frequency: 1.0
+      leafSize: 0.25
+    waitUntilMove: false
+  odom:
+    geo:
+      Kab: 2.25
+      Kgb: 1.0
+      Kp: 4.5
+      Kq: 4.0
+      Kv: 11.25
+      abias_max: 5.0
+      gbias_max: 0.5
+    gicp:
+      initLambdaFactor: 1e-9
+      kCorrespondences: 16
+      maxCorrespondenceDistance: 0.5
+      maxIterations: 32
+      minNumPoints: 64
+      rotationEpsilon: 0.01
+      transformationEpsilon: 0.01
+    gravity: 9.80665
+    imu:
+      approximateGravity: false
+      bufferSize: 5000
+      calibration:
+        accel: true
+        gyro: true
+        time: 3
+    keyframe:
+      threshD: 1.0
+      threshR: 45.0
+    preprocessing:
+      cropBoxFilter:
+        size: 1.0
+      voxelFilter:
+        res: 0.25
+    submap:
+      keyframe:
+        kcc: 10
+        kcv: 10
+        knn: 10
+  pointcloud:
+    deskew: true
+    voxelize: true
+  version: 1.2.0

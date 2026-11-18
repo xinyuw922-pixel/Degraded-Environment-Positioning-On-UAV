@@ -1,0 +1,45 @@
+// MIT License
+//
+// Copyright (c) 2022 Ignacio Vizzo, Tiziano Guadagnino, Benedikt Mersch, Cyrill
+// Stachniss.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+#pragma once
+
+#include "util.hpp"
+
+#include <Eigen/Core>
+#include <cstdint>
+#include <sophus/se3.hpp>
+
+namespace rko_lio::core {
+/// Voxelize point cloud keeping the original coordinates
+std::vector<Eigen::Vector3s> voxel_down_sample(const std::vector<Eigen::Vector3s>& points, const Scalar voxel_size);
+
+inline Eigen::Vector3i point_to_voxel(const Eigen::Vector3s& point, const Scalar inv_voxel_size) {
+  return (point * inv_voxel_size).array().floor().cast<int>();
+}
+
+struct VoxelHash {
+  std::size_t operator()(const Eigen::Vector3i& voxel) const {
+    const Eigen::Matrix<uint32_t, 3, 1> v = voxel.cast<uint32_t>();
+    return ((v.x() * 73856093) ^ (v.y() * 19349669) ^ (v.z() * 83492791));
+  }
+};
+} // namespace rko_lio::core

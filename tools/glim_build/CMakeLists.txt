@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.22)
+project(glim_headless LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+find_package(catkin REQUIRED COMPONENTS rosbag sensor_msgs livox_ros_driver2)
+find_package(glim REQUIRED)
+add_executable(glim_headless ../glim_headless.cpp)
+target_include_directories(glim_headless PRIVATE ${catkin_INCLUDE_DIRS} ${glim_INCLUDE_DIRS})
+target_link_libraries(glim_headless PRIVATE ${catkin_LIBRARIES} glim::glim)

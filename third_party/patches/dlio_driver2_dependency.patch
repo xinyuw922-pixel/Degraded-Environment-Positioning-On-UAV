@@ -1,0 +1,10 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -39,6 +39,7 @@
+ 
+ find_package(catkin REQUIRED COMPONENTS
+   roscpp
++  livox_ros_driver2
+   std_msgs
+   sensor_msgs
+   geometry_msgs

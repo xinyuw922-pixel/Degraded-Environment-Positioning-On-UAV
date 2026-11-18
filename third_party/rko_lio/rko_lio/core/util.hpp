@@ -1,0 +1,156 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 Meher V.R. Malladi.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#pragma once
+#include "rko_lio/core/scalar.hpp"
+#include <Eigen/Core>
+#include <chrono>
+#include <sophus/se3.hpp>
+
+// Scalar is either float or double, as configured
+namespace Eigen {
+using Vector3s = Vector3<rko_lio::core::Scalar>;
+using Vector4s = Vector4<rko_lio::core::Scalar>;
+using Matrix3s = Matrix3<rko_lio::core::Scalar>;
+using Matrix4s = Matrix4<rko_lio::core::Scalar>;
+using Matrix3_6s = Matrix<rko_lio::core::Scalar, 3, 6>;
+using Vector6s = Matrix<rko_lio::core::Scalar, 6, 1>;
+using Matrix6s = Matrix<rko_lio::core::Scalar, 6, 6>;
+using Quaternions = Quaternion<rko_lio::core::Scalar>;
+using Vector3i8 = Vector3<std::int8_t>;
+} // namespace Eigen
+
+namespace Sophus {
+using SE3s = SE3<rko_lio::core::Scalar>;
+using SO3s = SO3<rko_lio::core::Scalar>;
+} // namespace Sophus
+
+namespace rko_lio::core {
+using Vector3sVector = std::vector<Eigen::Vector3s>;
+
+using Nsec = std::chrono::nanoseconds;
+using TimestampVector = std::vector<Nsec>;
+
+// constants and util funcs
+constexpr Scalar square(Scalar x) { return x * x; }
+constexpr Scalar GRAVITY_MAG = 9.8107;
+inline Eigen::Vector3s gravity() { return {0, 0, -GRAVITY_MAG}; }
+
+// always divides in double, then narrows, so an absolute timestamp does not lose its magnitude
+template <typename T = double>
+constexpr T to_seconds(const Nsec d) {
+  return static_cast<T>(std::chrono::duration<double>(d).count());
+}
+
+// data structs
+struct State {
+  Nsec time{0};
+  Sophus::SE3s pose;
+  Eigen::Vector3s linear_velocity = Eigen::Vector3s::Zero();
+  Eigen::Vector3s angular_velocity = Eigen::Vector3s::Zero();
+  Eigen::Vector3s linear_acceleration = Eigen::Vector3s::Zero();
+};
+
+/** Constant-motion model anchored at the last registered state */
+struct MotionPrior {
+  Nsec start_time{0};
+  Eigen::Vector3s linear_velocity = Eigen::Vector3s::Zero();
+  Eigen::Vector3s acceleration = Eigen::Vector3s::Zero();
+  Eigen::Vector3s angular_velocity = Eigen::Vector3s::Zero();
+};
+
+/** Pose change from start_time to time */
+inline Sophus::SE3s relative_pose_at_time(const MotionPrior& prior, const Nsec time) {
+  const auto dt = to_seconds<Scalar>(time - prior.start_time);
+  Eigen::Vector6s tau;
+  tau.head<3>() = prior.linear_velocity * dt + (prior.acceleration * square(dt) / 2);
+  tau.tail<3>() = prior.angular_velocity * dt;
+  return Sophus::SE3s::exp(tau);
+}
+
+struct ImuBias {
+  Eigen::Vector3s accelerometer = Eigen::Vector3s::Zero();
+  Eigen::Vector3s gyroscope = Eigen::Vector3s::Zero();
+};
+
+struct ImuControl {
+  Nsec time{0};
+  Eigen::Vector3s acceleration = Eigen::Vector3s::Zero();
+  Eigen::Vector3s angular_velocity = Eigen::Vector3s::Zero();
+};
+
+/** Accumulated IMU statistics over the interval between consecutive LiDAR scans. */
+struct IntervalStats {
+  /** Number of IMU samples accumulated during this interval. */
+  int imu_count = 0;
+
+  /** Sum of unbiased angular velocity samples. */
+  Eigen::Vector3s angular_velocity_sum = Eigen::Vector3s::Zero();
+
+  /** Sum of gravity-compensated body-frame accelerations. */
+  Eigen::Vector3s body_acceleration_sum = Eigen::Vector3s::Zero();
+
+  /** Sum of unbiased raw IMU accelerations. */
+  Eigen::Vector3s imu_acceleration_sum = Eigen::Vector3s::Zero();
+
+  /** Mean magnitude of raw IMU acceleration over the interval. */
+  Scalar imu_accel_mag_mean = 0;
+
+  /** Variance accumulator for acceleration magnitude using Welford’s method. */
+  Scalar welford_sum_of_squares = 0;
+
+  /**
+   * Update accumulated statistics with a new IMU measurement.
+   * @param unbiased_ang_vel Unbiased angular velocity.
+   * @param uncompensated_unbiased_accel Uncompensated, unbiased acceleration.
+   * @param compensated_accel Gravity-compensated acceleration.
+   */
+  void update(const Eigen::Vector3s& unbiased_ang_vel,
+              const Eigen::Vector3s& uncompensated_unbiased_accel,
+              const Eigen::Vector3s& compensated_accel) {
+    ++imu_count;
+    angular_velocity_sum += unbiased_ang_vel;
+    imu_acceleration_sum += uncompensated_unbiased_accel;
+
+    const Scalar previous_mean = imu_accel_mag_mean;
+    const Scalar accel_norm = uncompensated_unbiased_accel.norm();
+
+    imu_accel_mag_mean += (accel_norm - previous_mean) / static_cast<Scalar>(imu_count);
+    welford_sum_of_squares += (accel_norm - previous_mean) * (accel_norm - imu_accel_mag_mean);
+
+    body_acceleration_sum += compensated_accel;
+  }
+
+  /** Reset all accumulated statistics to zero. */
+  void reset() {
+    imu_count = 0;
+    angular_velocity_sum.setZero();
+    body_acceleration_sum.setZero();
+    imu_acceleration_sum.setZero();
+    imu_accel_mag_mean = 0;
+    welford_sum_of_squares = 0;
+  }
+};
+
+}; // namespace rko_lio::core

@@ -60,3 +60,15 @@ __pycache__/
 credentials*
 *.local.yaml
 *.local.yml
+
+# Upstream DLIO documentation media; code and license remain tracked.
+/third_party/dlio/doc/
+
+# Imported upstream illustrations and papers remain local.
+/third_party/*/docs/
+/third_party/traj_lo/doc/
+/third_party/clid_slam/assets/
+/third_party/traj_lo/thirdparty/ros/ros_comm/utilities/xmlrpcpp/test/pngnow.png
+
+# Optional fonts for the upstream Traj-LO GUI examples.
+/third_party/traj_lo/thirdparty/imgui/misc/fonts/*.ttf

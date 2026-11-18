@@ -1,0 +1,102 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 5f91a33..fe2cdd0 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -51,7 +51,7 @@ find_package(catkin REQUIRED COMPONENTS
+   std_msgs
+   pcl_ros
+   tf
+-  livox_ros_driver
++  livox_ros_driver2
+   message_generation
+   eigen_conversions
+ )
+@@ -86,4 +86,4 @@ catkin_package(
+ 
+ add_executable(fastlio_mapping src/laserMapping.cpp include/ikd-Tree/ikd_Tree.cpp src/preprocess.cpp)
+ target_link_libraries(fastlio_mapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES})
+-target_include_directories(fastlio_mapping PRIVATE ${PYTHON_INCLUDE_DIRS})
+\ No newline at end of file
++target_include_directories(fastlio_mapping PRIVATE ${PYTHON_INCLUDE_DIRS})
+diff --git a/src/laserMapping.cpp b/src/laserMapping.cpp
+index fc41408..fbed297 100644
+--- a/src/laserMapping.cpp
++++ b/src/laserMapping.cpp
+@@ -56,7 +56,7 @@
+ #include <tf/transform_datatypes.h>
+ #include <tf/transform_broadcaster.h>
+ #include <geometry_msgs/Vector3.h>
+-#include <livox_ros_driver/CustomMsg.h>
++#include <livox_ros_driver2/CustomMsg.h>
+ #include "preprocess.h"
+ #include <ikd-Tree/ikd_Tree.h>
+ 
+@@ -299,7 +299,7 @@ void standard_pcl_cbk(const sensor_msgs::PointCloud2::ConstPtr &msg)
+ 
+ double timediff_lidar_wrt_imu = 0.0;
+ bool   timediff_set_flg = false;
+-void livox_pcl_cbk(const livox_ros_driver::CustomMsg::ConstPtr &msg) 
++void livox_pcl_cbk(const livox_ros_driver2::CustomMsg::ConstPtr &msg) 
+ {
+     mtx_buffer.lock();
+     double preprocess_start_time = omp_get_wtime();
+diff --git a/src/preprocess.cpp b/src/preprocess.cpp
+index 09a3959..552ea64 100644
+--- a/src/preprocess.cpp
++++ b/src/preprocess.cpp
+@@ -41,7 +41,7 @@ void Preprocess::set(bool feat_en, int lid_type, double bld, int pfilt_num)
+   point_filter_num = pfilt_num;
+ }
+ 
+-void Preprocess::process(const livox_ros_driver::CustomMsg::ConstPtr &msg, PointCloudXYZI::Ptr &pcl_out)
++void Preprocess::process(const livox_ros_driver2::CustomMsg::ConstPtr &msg, PointCloudXYZI::Ptr &pcl_out)
+ {  
+   avia_handler(msg);
+   *pcl_out = pl_surf;
+@@ -89,7 +89,7 @@ void Preprocess::process(const sensor_msgs::PointCloud2::ConstPtr &msg, PointClo
+   *pcl_out = pl_surf;
+ }
+ 
+-void Preprocess::avia_handler(const livox_ros_driver::CustomMsg::ConstPtr &msg)
++void Preprocess::avia_handler(const livox_ros_driver2::CustomMsg::ConstPtr &msg)
+ {
+   pl_surf.clear();
+   pl_corn.clear();
+diff --git a/src/preprocess.h b/src/preprocess.h
+index 35f3833..1f14ddd 100644
+--- a/src/preprocess.h
++++ b/src/preprocess.h
+@@ -5,7 +5,7 @@
+ #include <ros/ros.h>
+ #include <pcl_conversions/pcl_conversions.h>
+ #include <sensor_msgs/PointCloud2.h>
+-#include <livox_ros_driver/CustomMsg.h>
++#include <livox_ros_driver2/CustomMsg.h>
+ 
+ using namespace std;
+ 
+@@ -91,7 +91,7 @@ class Preprocess
+   Preprocess();
+   ~Preprocess();
+   
+-  void process(const livox_ros_driver::CustomMsg::ConstPtr &msg, PointCloudXYZI::Ptr &pcl_out);
++  void process(const livox_ros_driver2::CustomMsg::ConstPtr &msg, PointCloudXYZI::Ptr &pcl_out);
+   void process(const sensor_msgs::PointCloud2::ConstPtr &msg, PointCloudXYZI::Ptr &pcl_out);
+   void set(bool feat_en, int lid_type, double bld, int pfilt_num);
+ 
+@@ -107,7 +107,7 @@ class Preprocess
+     
+ 
+   private:
+-  void avia_handler(const livox_ros_driver::CustomMsg::ConstPtr &msg);
++  void avia_handler(const livox_ros_driver2::CustomMsg::ConstPtr &msg);
+   void oust64_handler(const sensor_msgs::PointCloud2::ConstPtr &msg);
+   void velodyne_handler(const sensor_msgs::PointCloud2::ConstPtr &msg);
+   void sim_handler(const sensor_msgs::PointCloud2::ConstPtr &msg);
+@@ -127,4 +127,4 @@ class Preprocess
+   double smallp_intersect, smallp_ratio;
+   double vx, vy, vz;
+ };
+-#endif
+\ No newline at end of file
++#endif

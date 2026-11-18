@@ -1,0 +1,137 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 Meher V.R. Malladi.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#pragma once
+#include "rko_lio/core/lio.hpp"
+// stl
+#include <atomic>
+#include <filesystem>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <string_view>
+#include <thread>
+// ros
+#include <geometry_msgs/msg/accel_stamped.hpp>
+#include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
+#include <rclcpp/context.hpp>
+#include <rclcpp/node.hpp>
+#include <rclcpp/node_options.hpp>
+#include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/u_int32.hpp>
+#include <tf2_ros/buffer.hpp>
+#include <tf2_ros/transform_broadcaster.hpp>
+#include <tf2_ros/transform_listener.hpp>
+
+namespace rko_lio::ros {
+
+struct LidarScan {
+  core::Timestamps timestamps;
+  core::Vector3sVector points;
+};
+// Shared helper used by both the threaded and sequential nodes.
+core::ImuControl imu_msg_to_imu_data(const sensor_msgs::msg::Imu& imu_msg);
+
+class BaseNode {
+public:
+  // field order minimises padding
+  Sophus::SE3s extrinsic_imu2base;
+  Sophus::SE3s extrinsic_lidar2base;
+
+  std::unique_ptr<core::LIO> lio;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;
+  core::Nsec publish_map_after = std::chrono::seconds(1);
+  rclcpp::Node::SharedPtr node;
+  core::TimestampProcessingConfig timestamp_proc_config;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener;
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer;
+
+  rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_publisher;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr frame_publisher;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_publisher;
+  rclcpp::Publisher<geometry_msgs::msg::AccelStamped>::SharedPtr lidar_accel_publisher;
+  rclcpp::Publisher<std_msgs::msg::UInt32>::SharedPtr reset_count_publisher;
+
+  std::string imu_topic;
+  std::string imu_frame; // default: get from the first imu message
+  std::string lidar_topic;
+  std::string lidar_frame; // default: get from the first lidar message
+  std::string base_frame;
+  std::string odom_frame = "odom";
+  std::string odom_topic = "rko_lio/odom";
+  std::string map_topic = "rko_lio/local_map";
+  std::string deskewed_scan_topic = "rko_lio/deskewed_scan";
+  std::string results_dir = "results";
+  std::string run_name = "rko_lio_run";
+
+  std::mutex local_map_mutex;
+
+  bool dump_results = false;
+  bool invert_odom_tf = false;
+  bool publish_lidar_acceleration = false;
+  bool publish_deskewed_scan = false;
+  bool publish_local_map = false;
+  bool extrinsics_set = false;
+  bool reset_on_registration_error = false;
+
+  std::atomic<bool> atomic_node_running = true;
+  rclcpp::OnShutdownCallbackHandle shutdown_handle;
+  std::jthread map_publish_thread;
+
+  BaseNode() = delete;
+  BaseNode(const std::string& node_name, const rclcpp::NodeOptions& options);
+
+  void parse_cli_extrinsics();
+  bool check_and_set_extrinsics();
+
+  // Parse the message's frame_id into target_frame on first sight, throw if neither header nor static extrinsics
+  // are usable, and report whether extrinsics are now set. Extrinsics are assumed static; if they change, switch
+  // to querying TF inline per-message.
+  bool ensure_frame_and_extrinsics(std::string& target_frame, const std::string& msg_frame, std::string_view kind);
+
+  LidarScan process_lidar_msg(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& lidar_msg) const;
+
+  core::Vector3sVector register_scan_locked(core::Vector3sVector scan, const core::Timestamps& timestamps);
+
+  void publish_lidar_outputs(const core::Vector3sVector& deskewed_scan) const;
+
+  void publish_odometry(const core::State& state,
+                        const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr& publisher) const;
+  void publish_tf(const core::State& state) const;
+  void publish_lidar_accel(const core::State& state) const;
+  void publish_map_loop();
+  void dump_results_to_disk(const std::filesystem::path& results_dir, const std::string& run_name) const;
+
+  void reset_odometry();
+
+  ~BaseNode();
+  BaseNode(const BaseNode&) = delete;
+  BaseNode(BaseNode&&) = delete;
+  BaseNode& operator=(const BaseNode&) = delete;
+  BaseNode& operator=(BaseNode&&) = delete;
+};
+
+} // namespace rko_lio::ros

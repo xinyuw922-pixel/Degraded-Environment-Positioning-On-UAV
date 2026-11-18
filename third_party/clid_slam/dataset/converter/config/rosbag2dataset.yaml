@@ -1,0 +1,7 @@
+input_bag: './hku1_converted.bag'
+output_folder: './dataset/hku/'
+imu_topic: '/livox/imu'
+lidar_topic: '/livox/pointcloud2'
+image_topic: "/left_camera/image/compressed"  # or /camera/color/image_raw
+batch_size: 100 # Number of messages per batch
+end_frame: -1 # -1 means process the entire bag file
